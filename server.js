@@ -192,7 +192,7 @@ async function processVideo(videoPath, jobId, outputDir) {
     updateJobStatus(jobId, {
       ...jobStatus.get(jobId),
       stage: "extracting_frames",
-      progress: 5,
+      progress: 0, // 从0%开始
     });
     
     logFormat.info(`开始提取帧, jobId: ${jobId}`);
@@ -206,13 +206,20 @@ async function processVideo(videoPath, jobId, outputDir) {
     updateJobStatus(jobId, {
       ...jobStatus.get(jobId),
       stage: "frames_extracted",
-      progress: 50,
+      progress: 100, // 设置为100%表示该阶段完成
       framesCount: framesCount,
       framesDir: outputDir,
     });
 
-    // 这里可以添加调用COLMAP的代码
-    // await runColmap(outputDir, jobId);
+    // 模拟COLMAP优化过程
+    logFormat.info(`开始模拟COLMAP优化, jobId: ${jobId}`);
+    await simulateColmapOptimization(jobId);
+    logFormat.info(`COLMAP优化模拟完成, jobId: ${jobId}`);
+
+    // 模拟高斯泼溅优化过程
+    logFormat.info(`开始模拟高斯泼溅优化, jobId: ${jobId}`);
+    await simulateGaussianSplatting(jobId);
+    logFormat.info(`高斯泼溅优化模拟完成, jobId: ${jobId}`);
 
     // 更新最终状态
     logFormat.info(`处理完成, 更新最终状态, jobId: ${jobId}`);
@@ -274,8 +281,8 @@ function extractFrames(videoPath, outputDir, jobId) {
           progressMatch[progressMatch.length - 1].split("=")[1].trim()
         );
 
-        // 假设总帧数为500，计算进度百分比（实际中应动态获取总帧数）
-        const progress = Math.min(5 + (frameNumber / 500) * 45, 50); // 5-50%的总进度区间
+        // 假设总帧数为500，计算进度百分比
+        const progress = Math.min((frameNumber / 500) * 100, 100); // 0-100%的总进度区间
 
         updateJobStatus(jobId, {
           ...jobStatus.get(jobId),
@@ -296,6 +303,84 @@ function extractFrames(videoPath, outputDir, jobId) {
         );
       }
     });
+  });
+}
+
+// 模拟COLMAP优化过程的函数
+async function simulateColmapOptimization(jobId) {
+  return new Promise((resolve) => {
+    updateJobStatus(jobId, {
+      ...jobStatus.get(jobId),
+      stage: "colmap_optimization",
+      progress: 0, // 从0%开始
+    });
+
+    // 模拟进度增加，每次更新间隔为1000毫秒，共40次，从0%到100%进度
+    let progress = 0;
+    const interval = 1000; // 1000毫秒更新一次
+    const progressIncrement = 2.5; // 每次增加2.5%
+    const totalUpdates = 40; // 总共更新40次 (约40秒)
+    
+    let updateCount = 0;
+    const progressTimer = setInterval(() => {
+      updateCount++;
+      progress += progressIncrement;
+      
+      if (updateCount >= totalUpdates || progress >= 100) {
+        clearInterval(progressTimer);
+        updateJobStatus(jobId, {
+          ...jobStatus.get(jobId),
+          stage: "colmap_optimization",
+          progress: 100,
+        });
+        resolve();
+      } else {
+        updateJobStatus(jobId, {
+          ...jobStatus.get(jobId),
+          stage: "colmap_optimization",
+          progress,
+        });
+      }
+    }, interval);
+  });
+}
+
+// 模拟高斯泼溅优化过程的函数
+async function simulateGaussianSplatting(jobId) {
+  return new Promise((resolve) => {
+    updateJobStatus(jobId, {
+      ...jobStatus.get(jobId),
+      stage: "gaussian_splatting",
+      progress: 0, // 从0%开始
+    });
+
+    // 模拟进度增加，每次更新间隔为1000毫秒，共50次，从0%到100%进度
+    let progress = 0;
+    const interval = 1000; // 1000毫秒更新一次
+    const progressIncrement = 2; // 每次增加2%
+    const totalUpdates = 50; // 总共更新50次 (约50秒)
+    
+    let updateCount = 0;
+    const progressTimer = setInterval(() => {
+      updateCount++;
+      progress += progressIncrement;
+      
+      if (updateCount >= totalUpdates || progress >= 100) {
+        clearInterval(progressTimer);
+        updateJobStatus(jobId, {
+          ...jobStatus.get(jobId),
+          stage: "gaussian_splatting",
+          progress: 100,
+        });
+        resolve();
+      } else {
+        updateJobStatus(jobId, {
+          ...jobStatus.get(jobId),
+          stage: "gaussian_splatting",
+          progress,
+        });
+      }
+    }, interval);
   });
 }
 
